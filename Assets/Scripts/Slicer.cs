@@ -20,16 +20,12 @@ namespace Slicing
 
             bool intersect = false;
             
-            //change the plane to the obj's base
-            // var v1 = obj.transform.worldToLocalMatrix.MultiplyPoint(plane.a);
-            // var v2 = obj.transform.worldToLocalMatrix.MultiplyPoint(plane.b);
-            // var v3 = obj.transform.worldToLocalMatrix.MultiplyPoint(plane.c);
-            // plane.point = v2;
-            // plane.normal = Vector3.Cross(v3 - v2, v1 - v2).normalized;
             var worldToLocalMatrix = obj.transform.worldToLocalMatrix;
+            //change the plane to the obj's base
             plane.point = worldToLocalMatrix.MultiplyPoint(plane.point);
-            plane.normal = worldToLocalMatrix.MultiplyPoint(plane.normal);
-            
+            plane.normal = worldToLocalMatrix.MultiplyVector(plane.normal).normalized;
+            Debug.Log("point: "+plane.point);
+            Debug.Log("normal: "+plane.normal);
             // iterate triangles
             Mesh mesh = mf.mesh;
             List<MeshVertex> newMeshVertices = MeshVertex.ReadFromMesh(mesh);
@@ -46,9 +42,9 @@ namespace Slicing
                 Vector3 c = mesh.vertices[ci];
                 
                 float kab, kac, kbc;
-                bool iab = plane.Intersection(a, b, out kab, out var ipab);
-                bool iac = plane.Intersection(a, c, out kac, out var ipac);
-                bool ibc = plane.Intersection(b, c, out kbc, out var ipbc);
+                var iab = plane.Intersection(a, b, out kab, out var ipab);
+                var iac = plane.Intersection(a, c, out kac, out var ipac);
+                var ibc = plane.Intersection(b, c, out kbc, out var ipbc);
 
                 //choose a tip and two other vertices as two points the the edge
                 //                ^   a
@@ -56,10 +52,10 @@ namespace Slicing
                 //        -------------------
                 //           /        \
                 //       c /___________\ b
-                int tipi, e0i, e1i; //tip, edge point0, edge point1
-                Vector2 uv0, uv1; // uv for the intersection points
-                Vector3 i0, i1; // intersection points
-                Vector3 n0, n1; // normals of intersection points
+                int tipi = default, e0i = default, e1i = default; //tip, edge point0, edge point1
+                Vector2 uv0 = default, uv1 = default; // uv for the intersection points
+                Vector3 i0 = default, i1 = default; // intersection points
+                Vector3 n0 = default, n1 = default; // normals of intersection points
                 
                 // deciding which point of (a,b,c) is the tip.
                 // calculating uv = a + k(b-a)
@@ -67,7 +63,7 @@ namespace Slicing
                 //copy all old vertices, then add intersection points as new vertices
                 //make a new triangles list
                 
-                if (iab && iac)
+                if (iab==IntersectionResult.One && iac==IntersectionResult.One)
                 {
                     tipi = ai; 
                     e0i = bi; i0 = ipab; 
@@ -77,7 +73,7 @@ namespace Slicing
                     e1i = ci;  i1 = ipac; 
                     uv1 = mesh.uv[ai] + kac*(mesh.uv[ci]-mesh.uv[ai]);
                     n1 = (mesh.normals[ai] + mesh.normals[ci]).normalized;
-                }else if (iab && ibc)
+                }else if (iab==IntersectionResult.One && ibc==IntersectionResult.One)
                 {
                     tipi = bi; 
                     e0i = ci; i0 = ipbc; uv0 = mesh.uv[bi] + kbc*(mesh.uv[ci]-mesh.uv[bi]);
@@ -85,7 +81,7 @@ namespace Slicing
                     
                     e1i = ai; i1 = ipab; uv1 = mesh.uv[ai] + kab*(mesh.uv[bi]-mesh.uv[ai]);
                     n1 = (mesh.normals[ai] + mesh.normals[bi]).normalized;
-                }else if (iac && ibc)
+                }else if (iac==IntersectionResult.One && ibc==IntersectionResult.One)
                 {
                     tipi = ci;
                     e0i = ai; i0 = ipac; uv0 = mesh.uv[ai] + kac*(mesh.uv[ci]-mesh.uv[ai]);
@@ -94,7 +90,7 @@ namespace Slicing
                     e1i = bi; i1 = ipbc; uv1 = mesh.uv[bi] + kbc*(mesh.uv[ci]-mesh.uv[bi]);
                     n1 = (mesh.normals[ci] + mesh.normals[bi]).normalized;
                 }
-                else
+                else if(iab==IntersectionResult.Zero && iac==IntersectionResult.Zero && ibc==IntersectionResult.Zero)
                 {
                     //no intersection
                     newTriangles.Add(ai);
@@ -138,13 +134,20 @@ namespace Slicing
             {
                 Vector3 vertex = newMeshVertices[i].vertex;
                 var side = plane.sideOf(vertex);
-                if (side == 0)
+                if (side == 1)
                 {
                     oldNewIdxDict1[i] = ve1.Count;
                     ve1.Add(newMeshVertices[i]);
                 }
-                else
+                else if(side == -1)
                 {
+                    oldNewIdxDict2[i] = ve2.Count;
+                    ve2.Add(newMeshVertices[i]);
+                }
+                else //side == 0, on the plane
+                {
+                    oldNewIdxDict1[i] = ve1.Count;
+                    ve1.Add(newMeshVertices[i]);
                     oldNewIdxDict2[i] = ve2.Count;
                     ve2.Add(newMeshVertices[i]);
                 }
@@ -171,7 +174,7 @@ namespace Slicing
                     tri1.Add(oldNewIdxDict1[idx1]);
                     tri1.Add(oldNewIdxDict1[idx2]);
                 }
-                else
+                if (oldNewIdxDict2.ContainsKey(idx0) && oldNewIdxDict2.ContainsKey(idx1) && oldNewIdxDict2.ContainsKey(idx2))
                 {
                     tri2.Add(oldNewIdxDict2[idx0]);
                     tri2.Add(oldNewIdxDict2[idx1]);
@@ -179,12 +182,32 @@ namespace Slicing
                 }
             }
             obj.SetActive(false);
-            part1 = CreateMesh(ve1, tri1.ToArray(), obj); 
+            part1 = CreateMesh(ve1, tri1.ToArray(), obj);
             part2 = CreateMesh(ve2, tri2.ToArray(), obj);
+            CopyComponents(obj, part1, part2);
+            
+            // part1 = CreateMeshFromOrigin(ve1, tri1.ToArray(), obj);
+            // part2 = CreateMeshFromOrigin(ve2, tri2.ToArray(), obj);
+            
+            part1.SetActive(true);
+            part2.SetActive(true);
+            part1.name = obj.name + "1";
+            part2.name = obj.name + "2";
             return true;
         }
         
-        
+        public GameObject CreateMeshFromOrigin(List<MeshVertex> vertices, int[] triangles, GameObject origin)
+        {
+            GameObject obj = GameObject.Instantiate(origin);
+
+            MeshFilter mf = obj.GetComponent<MeshFilter>();
+            Mesh mesh = new Mesh();
+            MeshVertex.WriteToMesh(ref mesh, vertices);
+            mesh.SetTriangles(triangles, 0);
+            mf.sharedMesh = mesh;
+            
+            return obj;
+        }
         public GameObject CreateMesh(List<MeshVertex> vertices, int[] triangles, GameObject origin)
         {
             GameObject obj = new GameObject();
@@ -206,6 +229,25 @@ namespace Slicing
             return obj;
         }
 
+        private static void CopyComponents(GameObject obj, GameObject part1, GameObject part2)
+        {
+            if (obj.TryGetComponent(out Rigidbody rb))
+            {
+                var rb1 = part1.AddComponent<Rigidbody>();
+                var rb2 = part2.AddComponent<Rigidbody>();
+                rb1.mass = rb.mass/2; //TODO :D
+                rb2.mass = rb1.mass;
+            }
+            
+            if (obj.TryGetComponent(out Collider collider))
+            {
+                var col1 = part1.AddComponent<MeshCollider>();
+                col1.convex = true;
+                var col2 = part2.AddComponent<MeshCollider>();
+                col2.convex = true;
+            }
+        }
+        
         public static void CopyMeshMaterial(GameObject from, GameObject to)
         {
             MeshRenderer oldMeshRenderer = from.GetComponent<MeshRenderer>();

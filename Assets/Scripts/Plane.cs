@@ -2,17 +2,13 @@
 
 namespace Slicing
 {
+    public enum IntersectionResult { Zero, One, Two, } 
     public class Plane
     {
         public Vector3 normal, point;
-        // public Vector3 a, b, c;
 
         public Plane(Vector3 a, Vector3 b, Vector3 c)
         {
-            // this.a = a;
-            // this.b = a;
-            // this.c = a;
-            
             normal = Vector3.Cross(b - a, c - a).normalized;
             point = a;
         }
@@ -23,27 +19,39 @@ namespace Slicing
         }
         
         //find the intersection point
-        public bool Intersection(Vector3 a, Vector3 b, out float k, out Vector3 intersectionPoint)
+        public IntersectionResult Intersection(Vector3 a, Vector3 b, out float k, out Vector3 intersectionPoint)
         {
             intersectionPoint = Vector3.zero;
             k = 0;
-            if (Vector3.Dot((a - point), normal) * Vector3.Dot((b - point), normal) >= 0) //TODO: == 0?
+            var apnXbpn = Vector3.Dot((a - point), normal) * Vector3.Dot((b - point), normal);
+            if (apnXbpn > 0) //TODO: == 0?
             {
-                return false;
+                return IntersectionResult.Zero;
             }
-            k = Vector3.Dot((point - a), normal) / Vector3.Dot((b - a), normal);
-
-            k = Mathf.Clamp01(k); //TODO ?
+            if (apnXbpn == 0) // two points of the line are on the plane
+            {
+                k = 0.5f;
+                intersectionPoint = a + k*(b - a);
+                return IntersectionResult.Two;
+            }
+            else
+            {
+                k = Vector3.Dot((point - a), normal) / Vector3.Dot((b - a), normal);
+                k = Mathf.Clamp01(k); //TODO ?
+            }
             
             intersectionPoint = a + k*(b - a);
-            return true;
+            return IntersectionResult.One;
         }
 
         public int sideOf(Vector3 point)
         {
-            if (Vector3.Dot((point - this.point), this.normal) >= 0)
+            var value = Vector3.Dot((point - this.point), this.normal);
+            if(value > 0)
+                return 1;
+            if (value == 0)
                 return 0;
-            return 1;
+            return -1;
         }
     }
 }
