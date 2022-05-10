@@ -11,8 +11,10 @@ namespace Slicing
         }
         
         
-        public bool Slice(GameObject obj, Plane plane)
+        public bool Slice(GameObject obj, Plane plane, out GameObject part1, out GameObject part2)
         {
+            part1 = null;
+            part2 = null;
             MeshFilter mf = obj.GetComponent<MeshFilter>();
             if (mf == null) return false;
 
@@ -48,35 +50,48 @@ namespace Slicing
                 bool iac = plane.Intersection(a, c, out kac, out var ipac);
                 bool ibc = plane.Intersection(b, c, out kbc, out var ipbc);
 
-                int tipi, b0i, b1i;
-                Vector2 uv0, uv1;
-                Vector3 i0, i1;
-                Vector3 n0, n1;
+                //choose a tip and two other vertices as two points the the edge
+                //                ^   a
+                //              /   \
+                //        -------------------
+                //           /        \
+                //       c /___________\ b
+                int tipi, e0i, e1i; //tip, edge point0, edge point1
+                Vector2 uv0, uv1; // uv for the intersection points
+                Vector3 i0, i1; // intersection points
+                Vector3 n0, n1; // normals of intersection points
+                
+                // deciding which point of (a,b,c) is the tip.
+                // calculating uv = a + k(b-a)
+                
+                //copy all old vertices, then add intersection points as new vertices
+                //make a new triangles list
+                
                 if (iab && iac)
                 {
                     tipi = ai; 
-                    b0i = bi; i0 = ipab; 
+                    e0i = bi; i0 = ipab; 
                     uv0 = mesh.uv[ai] + kab*(mesh.uv[bi]-mesh.uv[ai]);
                     n0 = (mesh.normals[ai] + mesh.normals[bi]).normalized;
                     
-                    b1i = ci;  i1 = ipac; 
+                    e1i = ci;  i1 = ipac; 
                     uv1 = mesh.uv[ai] + kac*(mesh.uv[ci]-mesh.uv[ai]);
                     n1 = (mesh.normals[ai] + mesh.normals[ci]).normalized;
                 }else if (iab && ibc)
                 {
                     tipi = bi; 
-                    b0i = ci; i0 = ipbc; uv0 = mesh.uv[bi] + kbc*(mesh.uv[ci]-mesh.uv[bi]);
+                    e0i = ci; i0 = ipbc; uv0 = mesh.uv[bi] + kbc*(mesh.uv[ci]-mesh.uv[bi]);
                     n0 = (mesh.normals[ci] + mesh.normals[bi]).normalized;
                     
-                    b1i = ai; i1 = ipab; uv1 = mesh.uv[ai] + kab*(mesh.uv[bi]-mesh.uv[ai]);
+                    e1i = ai; i1 = ipab; uv1 = mesh.uv[ai] + kab*(mesh.uv[bi]-mesh.uv[ai]);
                     n1 = (mesh.normals[ai] + mesh.normals[bi]).normalized;
                 }else if (iac && ibc)
                 {
                     tipi = ci;
-                    b0i = ai; i0 = ipac; uv0 = mesh.uv[ai] + kac*(mesh.uv[ci]-mesh.uv[ai]);
+                    e0i = ai; i0 = ipac; uv0 = mesh.uv[ai] + kac*(mesh.uv[ci]-mesh.uv[ai]);
                     n0 = (mesh.normals[ai] + mesh.normals[ci]).normalized;
                     
-                    b1i = bi; i1 = ipbc; uv1 = mesh.uv[bi] + kbc*(mesh.uv[ci]-mesh.uv[bi]);
+                    e1i = bi; i1 = ipbc; uv1 = mesh.uv[bi] + kbc*(mesh.uv[ci]-mesh.uv[bi]);
                     n1 = (mesh.normals[ci] + mesh.normals[bi]).normalized;
                 }
                 else
@@ -100,16 +115,16 @@ namespace Slicing
                 newTriangles.Add(i1i);
                 
                 newTriangles.Add(i0i);
-                newTriangles.Add(b0i);
+                newTriangles.Add(e0i);
                 newTriangles.Add(i1i);
                 
-                newTriangles.Add(b0i);
-                newTriangles.Add(b1i);
+                newTriangles.Add(e0i);
+                newTriangles.Add(e1i);
                 newTriangles.Add(i1i);
             }
 
             if (!intersect) return false;
-            //split
+            //split into part1 and part2
             var ve1 = new List<MeshVertex>();
             var oldNewIdxDict1 = new Dictionary<int, int>();
             var tri1 = new List<int>();
@@ -138,7 +153,6 @@ namespace Slicing
             //split new vertices (shared by two part)
             for (int i = mesh.vertices.Length; i < newMeshVertices.Count; i++)
             {
-                Vector3 vertex = newMeshVertices[i].vertex;
                 oldNewIdxDict1[i] = ve1.Count;
                 ve1.Add(newMeshVertices[i]);
                 oldNewIdxDict2[i] = ve2.Count;
@@ -165,8 +179,8 @@ namespace Slicing
                 }
             }
             obj.SetActive(false);
-            var o1 = CreateMesh(ve1, tri1.ToArray(), obj); 
-            var o2 = CreateMesh(ve2, tri2.ToArray(), obj);
+            part1 = CreateMesh(ve1, tri1.ToArray(), obj); 
+            part2 = CreateMesh(ve2, tri2.ToArray(), obj);
             return true;
         }
         
