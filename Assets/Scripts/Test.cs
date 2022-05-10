@@ -11,14 +11,13 @@ public class Test : MonoBehaviour
     void Start()
     {
         Slicer slicer = new Slicer();
-        Vector3[] v = new[] {Vector3.zero, new Vector3(0, 5, 0), new Vector3(5, 0, 0)};
-        int[] t = new[] {0, 1, 2};
-        var obj = slicer.CreateMesh(v, t);
-        obj.name = "base";
+        GameObject obj = GameObject.Find("Cube");
         
-
-        var p = new Plane(new Vector3(0, 1f, 0), new Vector3(0, 3f, 0));
+        
+        var p = new Plane(new Vector3(1f, 1f, 0).normalized, new Vector3(0, 3f, 0));
         slicer.Slice(obj, p);
+
+        // Slicer.CopyMesh(GameObject.Find("Cube"));
     }
 
     // Update is called once per frame

@@ -22,15 +22,15 @@ namespace Slicing
             this.point = point;
         }
         
-        public bool Intersection(Vector3 a, Vector3 b, out Vector3 intersectionPoint)
+        public bool Intersection(Vector3 a, Vector3 b, out float k, out Vector3 intersectionPoint)
         {
             intersectionPoint = Vector3.zero;
+            k = 0;
             if (Vector3.Dot((a - point), normal) * Vector3.Dot((b - point), normal) >= 0) //TODO: == 0?
             {
                 return false;
             }
-
-            float k = Vector3.Dot((point - a), normal) / Vector3.Dot((b - a), normal);
+            k = Vector3.Dot((point - a), normal) / Vector3.Dot((b - a), normal);
 
             k = Mathf.Clamp01(k); //TODO ?
             
