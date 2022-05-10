@@ -5,13 +5,13 @@ namespace Slicing
     public class Plane
     {
         public Vector3 normal, point;
-        public Vector3 a, b, c;
+        // public Vector3 a, b, c;
 
         public Plane(Vector3 a, Vector3 b, Vector3 c)
         {
-            this.a = a;
-            this.b = a;
-            this.c = a;
+            // this.a = a;
+            // this.b = a;
+            // this.c = a;
             
             normal = Vector3.Cross(b - a, c - a).normalized;
             point = a;
@@ -22,6 +22,7 @@ namespace Slicing
             this.point = point;
         }
         
+        //find the intersection point
         public bool Intersection(Vector3 a, Vector3 b, out float k, out Vector3 intersectionPoint)
         {
             intersectionPoint = Vector3.zero;
