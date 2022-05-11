@@ -10,6 +10,7 @@ public class Test : MonoBehaviour
 {
     public static string mainObj = "testObj";
 
+    public float force = 25;
     // Start is called before the first frame update
     void Start()
     {
@@ -44,13 +45,7 @@ public class Test : MonoBehaviour
 
             if (Physics.Raycast(ray, out RaycastHit hit, 100))
             {
-                string objName = hit.transform.gameObject.name;
-                if (objName.StartsWith(mainObj))
-                {
-                    // sliceObjects.Add(objName);
-                    // Debug.Log("hit: set.size = " + sliceObjects.Count);
-                    sliceObjects.Add(hit.transform.gameObject);
-                }
+                sliceObjects.Add(hit.transform.gameObject);
             }
         }
 
@@ -68,11 +63,12 @@ public class Test : MonoBehaviour
 
     void sliceObjectWithMouse(HashSet<GameObject> sliceObjects, Vector3 downPos, Vector3 upPos)
     {
-        Slicer slicer = new Slicer(25);
+        Slicer slicer = new Slicer(force);
         List<GameObject> goList = new List<GameObject>();
         List<Plane> planeList = new List<Plane>();
         foreach (GameObject obj in sliceObjects)
         {
+            if(obj.tag!="Sliceable") continue;
             // Debug.Log("cut obj: " + name);
 
             var p = new Plane(
@@ -84,7 +80,11 @@ public class Test : MonoBehaviour
             planeList.Add(p);
         }
 
-        StartCoroutine(SliceMultiple(slicer, goList, planeList));
+        StartCoroutine(SliceMultiple(slicer, goList, planeList, ((o1, o2) =>
+        {
+            o1.tag = "Sliceable";
+            o2.tag = "Sliceable";
+        })));
     }
 
     IEnumerator SliceMultiple(Slicer slicer, List<GameObject> objs, List<Plane> planes, Action<GameObject, GameObject> cb=null)

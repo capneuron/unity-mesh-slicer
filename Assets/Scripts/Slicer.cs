@@ -123,7 +123,8 @@ namespace Slicing
             
             int rootIdx2 = ve2.Count;
             ve2.Add(new MeshVertex(rootV2, Vector2.zero, -plane.normal));
-            
+
+            int c1=0, c2=0;
             for (int submesh = 0; submesh < 2 && submesh < mesh.subMeshCount; submesh++)
             {
                 var newTriangles = newTrianglesList[submesh];
@@ -133,10 +134,11 @@ namespace Slicing
                     {
                         var idx0 = newTriangles[i+j];
                         var idx1 = newTriangles[i+(j+1)%3];
-                    
+                        c1++;
                         if (crossSurfaceVerIdx.Contains(idx0) && crossSurfaceVerIdx.Contains(idx1) && idx0 != root &&
                             idx1 != root)
                         {
+                            c2++;
                             tri1[1].Add(ve1.Count);
                             ve1.Add(new MeshVertex(newMeshVertices[idx1].vertex, Vector2.zero, plane.normal));
                             tri1[1].Add(ve1.Count);
@@ -154,7 +156,7 @@ namespace Slicing
             }
 
            
-            
+            Debug.Log(c1+","+c2);
             
             obj.SetActive(false);
             part1 = CreateMesh(ve1, tri1[0].ToArray(), tri1[1].ToArray(), obj);
