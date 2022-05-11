@@ -1,8 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Numerics;
 using Slicing;
-using UnityEditor;
 using UnityEngine;
 using Plane = Slicing.Plane;
 using Vector3 = UnityEngine.Vector3;
@@ -26,7 +25,7 @@ public class Test : MonoBehaviour
     // Update is called once per frame
     Vector3 downMousePos = new Vector3();
     Vector3 upMousePos = new Vector3();
-    private HashSet<string> sliceObjects = new HashSet<string>();
+    private HashSet<GameObject> sliceObjects = new HashSet<GameObject>();
 
     void Update()
     {
@@ -42,15 +41,15 @@ public class Test : MonoBehaviour
         if (Input.GetMouseButton(0))
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            RaycastHit hit;
 
-            if (Physics.Raycast(ray, out hit, 100))
+            if (Physics.Raycast(ray, out RaycastHit hit, 100))
             {
                 string objName = hit.transform.gameObject.name;
                 if (objName.StartsWith(mainObj))
                 {
-                    sliceObjects.Add(objName);
+                    // sliceObjects.Add(objName);
                     // Debug.Log("hit: set.size = " + sliceObjects.Count);
+                    sliceObjects.Add(hit.transform.gameObject);
                 }
             }
         }
@@ -67,21 +66,35 @@ public class Test : MonoBehaviour
         }
     }
 
-    void sliceObjectWithMouse(HashSet<string> sliceObjects, Vector3 downPos, Vector3 upPos)
+    void sliceObjectWithMouse(HashSet<GameObject> sliceObjects, Vector3 downPos, Vector3 upPos)
     {
         Slicer slicer = new Slicer(25);
-        foreach (string name in sliceObjects)
+        List<GameObject> goList = new List<GameObject>();
+        List<Plane> planeList = new List<Plane>();
+        foreach (GameObject obj in sliceObjects)
         {
-            GameObject obj = GameObject.Find(name);
-            Debug.Log("cut obj: " + name);
+            // Debug.Log("cut obj: " + name);
 
             var p = new Plane(
                 Camera.main.ScreenToWorldPoint(new Vector3(downPos.x, downPos.y, Camera.main.nearClipPlane)),
                 Camera.main.ScreenToWorldPoint(new Vector3(upPos.x, upPos.y, Camera.main.nearClipPlane)),
                 Camera.main.ScreenToWorldPoint(new Vector3(upPos.x, upPos.y, Camera.main.farClipPlane)));
 
-            GameObject p1, p2;
-            if (slicer.Slice(obj, p, out p1, out p2)) ;
+            goList.Add(obj);
+            planeList.Add(p);
+        }
+
+        StartCoroutine(SliceMultiple(slicer, goList, planeList));
+    }
+
+    IEnumerator SliceMultiple(Slicer slicer, List<GameObject> objs, List<Plane> planes, Action<GameObject, GameObject> cb=null)
+    {
+        for (int i = 0; i < objs.Count; i++)
+        {
+            slicer.Slice(objs[i], planes[i], out GameObject o1, out GameObject o2);
+            cb?.Invoke(o1, o2);
+
+            yield return new WaitForSeconds(.10f);
         }
     }
 }
