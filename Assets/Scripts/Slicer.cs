@@ -432,9 +432,11 @@ namespace Slicing
             MeshRenderer mr = obj.AddComponent<MeshRenderer>();
 
             Mesh mesh = new Mesh();
+            
             mf.sharedMesh = mesh;
             CopyMeshMaterial(origin, obj);
             MeshVertex.WriteToMesh(ref mesh, vertices);
+            mf.sharedMesh.subMeshCount = 2;
             mesh.SetTriangles(triangles, 0);
             mesh.SetTriangles(crossTriangles, 1);
             return obj;
@@ -457,6 +459,14 @@ namespace Slicing
                 var col2 = part2.AddComponent<MeshCollider>();
                 col2.convex = true;
             }
+            
+            if (obj.TryGetComponent(out Sliceable sliceable))
+            {
+                var sl1 = part1.AddComponent<Sliceable>();
+                sl1.insideMaterial = sliceable.insideMaterial;
+                var sl2 = part2.AddComponent<Sliceable>();
+                sl2.insideMaterial = sliceable.insideMaterial;
+            }
         }
         
         public static void CopyMeshMaterial(GameObject from, GameObject to)
@@ -471,10 +481,12 @@ namespace Slicing
             //copy material
             List<Material> materialList = new List<Material>();
             oldMeshRenderer.GetSharedMaterials(materialList);
-            to.GetComponent<MeshFilter>().sharedMesh.subMeshCount = materialList.Count;
+            bool needNewMat = materialList.Count < 2;
+            int subMeshCount = Mathf.Max(2, materialList.Count);
+            to.GetComponent<MeshFilter>().sharedMesh.subMeshCount = subMeshCount;
             if (materialList.Count > 0)
             {
-                newMeshRenderer.materials = new Material[materialList.Count];
+                newMeshRenderer.materials = new Material[subMeshCount];
                 for (int j = 0; j < materialList.Count; j++)
                 {
                     //set material
@@ -484,6 +496,12 @@ namespace Slicing
                 }
             }
 
+            if (needNewMat)
+            {
+                var mat = from.GetComponent<Sliceable>().insideMaterial;
+                newMeshRenderer.materials[1].CopyPropertiesFromMaterial(mat);
+                newMeshRenderer.materials[1].shader = mat.shader;
+            }
         }
         public static void CopyMesh(GameObject obj)
         {

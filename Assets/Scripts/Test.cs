@@ -68,7 +68,7 @@ public class Test : MonoBehaviour
         List<Plane> planeList = new List<Plane>();
         foreach (GameObject obj in sliceObjects)
         {
-            if(obj.tag!="Sliceable") continue;
+            if(!Sliceable.IsSliceable(obj)) continue;
             // Debug.Log("cut obj: " + name);
 
             var p = new Plane(
@@ -80,11 +80,7 @@ public class Test : MonoBehaviour
             planeList.Add(p);
         }
 
-        StartCoroutine(SliceMultiple(slicer, goList, planeList, ((o1, o2) =>
-        {
-            o1.tag = "Sliceable";
-            o2.tag = "Sliceable";
-        })));
+        StartCoroutine(SliceMultiple(slicer, goList, planeList));
     }
 
     IEnumerator SliceMultiple(Slicer slicer, List<GameObject> objs, List<Plane> planes, Action<GameObject, GameObject> cb=null)
