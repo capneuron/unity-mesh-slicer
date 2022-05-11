@@ -32,13 +32,143 @@ namespace Slicing
             Mesh mesh = mf.mesh;
             int oldVerticesSize = mesh.vertices.Length;
             List<MeshVertex> newMeshVertices = MeshVertex.ReadFromMesh(mesh);
-            List<int> newTriangles = new List<int>();
+            List<List<int>> newTrianglesList = new List<List<int>>(); //for two submesh
             
-            for (int vi = 0; vi < mesh.triangles.Length; vi += 3)
+            //split into part1 and part2
+            var ve1 = new List<MeshVertex>();
+            var oldNewIdxDict1 = new Dictionary<int, int>();
+            List<int>[] tri1 = new List<int>[]{new List<int>(), new List<int>()}; //for two submesh
+            
+            var ve2 = new List<MeshVertex>();
+            var oldNewIdxDict2 = new Dictionary<int, int>();
+            List<int>[] tri2 = new List<int>[]{new List<int>(), new List<int>()}; //for two submesh
+            
+            HashSet<int> crossSurfaceVerIdx = new HashSet<int>();
+            
+            //split old vertices: all new vertices are appended to the end of all old vertices
+            for (int i = 0; i < oldVerticesSize; i++)
             {
-                var ai = mesh.triangles[vi];
-                var bi = mesh.triangles[vi + 1];
-                var ci = mesh.triangles[vi + 2];
+                Vector3 vertex = newMeshVertices[i].vertex;
+                var side = plane.sideOf(vertex);
+                MeshVertex mv = newMeshVertices[i];
+                if (side == 1)
+                {
+                    oldNewIdxDict1[i] = ve1.Count;
+                    ve1.Add(mv);
+                }
+                else if(side == -1)
+                {
+                    oldNewIdxDict2[i] = ve2.Count;
+                    ve2.Add(mv);
+                }
+                else //side == 0, on the plane
+                {
+                    oldNewIdxDict1[i] = ve1.Count;
+                    ve1.Add(mv);
+                    oldNewIdxDict2[i] = ve2.Count;
+                    ve2.Add(mv);
+                    crossSurfaceVerIdx.Add(i);
+                }
+            }
+            
+            //cutting
+            for (int submesh = 0; submesh < 2 && submesh < mesh.subMeshCount; submesh++)
+            {
+                if (SliceBySubMeshTriangles(mesh, submesh, plane, newMeshVertices, out List<int> newTriangles))
+                    intersect = true;
+                
+                //split new vertices (shared by two part)
+                for (int i = oldVerticesSize; i < newMeshVertices.Count; i++)
+                {
+                    oldNewIdxDict1[i] = ve1.Count;
+                    ve1.Add(newMeshVertices[i]);
+                    oldNewIdxDict2[i] = ve2.Count;
+                    ve2.Add(newMeshVertices[i]);
+                    crossSurfaceVerIdx.Add(i);
+                }
+                oldVerticesSize = newMeshVertices.Count;
+                
+                
+                //split triangles
+                for (int i = 0; i < newTriangles.Count; i+=3)
+                {
+                    var idx0 = newTriangles[i];
+                    var idx1 = newTriangles[i+1];
+                    var idx2 = newTriangles[i+2];
+                    if (oldNewIdxDict1.ContainsKey(idx0) && oldNewIdxDict1.ContainsKey(idx1) && oldNewIdxDict1.ContainsKey(idx2))
+                    {
+                        tri1[submesh].Add(oldNewIdxDict1[idx0]);
+                        tri1[submesh].Add(oldNewIdxDict1[idx1]);
+                        tri1[submesh].Add(oldNewIdxDict1[idx2]);
+                    }
+                    if (oldNewIdxDict2.ContainsKey(idx0) && oldNewIdxDict2.ContainsKey(idx1) && oldNewIdxDict2.ContainsKey(idx2))
+                    {
+                        tri2[submesh].Add(oldNewIdxDict2[idx0]);
+                        tri2[submesh].Add(oldNewIdxDict2[idx1]);
+                        tri2[submesh].Add(oldNewIdxDict2[idx2]);
+                    }
+                }
+                newTrianglesList.Add(newTriangles);
+            }
+            if (!intersect) return false;
+            
+            //seal the surface
+            int root = crossSurfaceVerIdx.ElementAt(0);
+            for (int submesh = 0; submesh < 2 && submesh < mesh.subMeshCount; submesh++)
+            {
+                var newTriangles = newTrianglesList[submesh];
+                for (int i = 0; i < newTriangles.Count; i+=3)
+                {
+                    for (int j = 0; j < 3; j++)
+                    {
+                        var idx0 = newTriangles[i+j];
+                        var idx1 = newTriangles[i+(j+1)%3];
+                    
+                        if (crossSurfaceVerIdx.Contains(idx0) && crossSurfaceVerIdx.Contains(idx1) && idx0 != root &&
+                            idx1 != root)
+                        {
+                            tri1[1].Add(oldNewIdxDict1[idx1]);
+                            tri1[1].Add(oldNewIdxDict1[idx0]);
+                            tri1[1].Add(oldNewIdxDict1[root]);
+            
+                            tri2[1].Add(oldNewIdxDict2[idx1]);
+                            tri2[1].Add(oldNewIdxDict2[idx0]);
+                            tri2[1].Add(oldNewIdxDict2[root]);
+                        }
+                    }
+                }
+            }
+
+           
+            
+            
+            obj.SetActive(false);
+            part1 = CreateMesh(ve1, tri1[0].ToArray(), tri1[1].ToArray(), obj);
+            part2 = CreateMesh(ve2, tri2[0].ToArray(), tri2[1].ToArray(), obj);
+            CopyComponents(obj, part1, part2);
+            
+            // part1 = CreateMeshFromOrigin(ve1, tri1.ToArray(), obj);
+            // part2 = CreateMeshFromOrigin(ve2, tri2.ToArray(), obj);
+            
+            part1.SetActive(true);
+            part2.SetActive(true);
+            part1.name = obj.name + "1";
+            part2.name = obj.name + "2";
+            return true;
+        }
+
+        private bool SliceBySubMeshTriangles(Mesh mesh, int submesh, Plane plane, List<MeshVertex> newMeshVertices, 
+           out List<int> newTriangles)
+        {
+            bool intersect = false;
+            // iterate triangles
+            newTriangles = new List<int>();
+            var oldTriangles = mesh.GetTriangles(submesh);
+            for (int vi = 0; vi < oldTriangles.Length; vi += 3)
+            {
+                var ai = oldTriangles[vi];
+                var bi = oldTriangles[vi + 1];
+                var ci = oldTriangles[vi + 2];
 
                 Vector3 a = mesh.vertices[ai];
                 Vector3 b = mesh.vertices[bi];
@@ -69,119 +199,9 @@ namespace Slicing
                 }
                 intersect = true;
             }
-
-            if (!intersect) return false;
-            //split into part1 and part2
-            var ve1 = new List<MeshVertex>();
-            var oldNewIdxDict1 = new Dictionary<int, int>();
-            var tri1 = new List<int>();
-            
-            var ve2 = new List<MeshVertex>();
-            var oldNewIdxDict2 = new Dictionary<int, int>();
-            var tri2 = new List<int>();
-            
-            HashSet<int> crossSurfaceVerIdx = new HashSet<int>();
-
-            //split old vertices: all new vertices are appended to the end of all old vertices
-            for (int i = 0; i < oldVerticesSize; i++)
-            {
-                Vector3 vertex = newMeshVertices[i].vertex;
-                var side = plane.sideOf(vertex);
-                MeshVertex mv = newMeshVertices[i];
-                if (side == 1)
-                {
-                    oldNewIdxDict1[i] = ve1.Count;
-                    ve1.Add(mv);
-                }
-                else if(side == -1)
-                {
-                    oldNewIdxDict2[i] = ve2.Count;
-                    ve2.Add(mv);
-                }
-                else //side == 0, on the plane
-                {
-                    Debug.Log("side==0");
-                    oldNewIdxDict1[i] = ve1.Count;
-                    ve1.Add(mv);
-                    oldNewIdxDict2[i] = ve2.Count;
-                    ve2.Add(mv);
-                    crossSurfaceVerIdx.Add(i);
-                }
-            }
-            
-            //split new vertices (shared by two part)
-            for (int i = oldVerticesSize; i < newMeshVertices.Count; i++)
-            {
-                Vector3 vertex = newMeshVertices[i].vertex;
-                
-                oldNewIdxDict1[i] = ve1.Count;
-                ve1.Add(newMeshVertices[i]);
-                oldNewIdxDict2[i] = ve2.Count;
-                ve2.Add(newMeshVertices[i]);
-                crossSurfaceVerIdx.Add(i);
-            }
-            
-            //split triangles
-            for (int i = 0; i < newTriangles.Count; i+=3)
-            {
-                var idx0 = newTriangles[i];
-                var idx1 = newTriangles[i+1];
-                var idx2 = newTriangles[i+2];
-                if (oldNewIdxDict1.ContainsKey(idx0) && oldNewIdxDict1.ContainsKey(idx1) && oldNewIdxDict1.ContainsKey(idx2))
-                {
-                    tri1.Add(oldNewIdxDict1[idx0]);
-                    tri1.Add(oldNewIdxDict1[idx1]);
-                    tri1.Add(oldNewIdxDict1[idx2]);
-                }
-                if (oldNewIdxDict2.ContainsKey(idx0) && oldNewIdxDict2.ContainsKey(idx1) && oldNewIdxDict2.ContainsKey(idx2))
-                {
-                    tri2.Add(oldNewIdxDict2[idx0]);
-                    tri2.Add(oldNewIdxDict2[idx1]);
-                    tri2.Add(oldNewIdxDict2[idx2]);
-                }
-            }
-
-            int root = crossSurfaceVerIdx.ElementAt(0);
-            var crossTri1 = new List<int>();
-            var crossTri2 = new List<int>();
-            for (int i = 0; i < newTriangles.Count; i+=3)
-            {
-                for (int j = 0; j < 3; j++)
-                {
-                    var idx0 = newTriangles[i+j];
-                    var idx1 = newTriangles[i+(j+1)%3];
-                    
-                    if (crossSurfaceVerIdx.Contains(idx0) && crossSurfaceVerIdx.Contains(idx1) && idx0 != root &&
-                        idx1 != root)
-                    {
-                        
-                        crossTri1.Add(oldNewIdxDict1[idx1]);
-                        crossTri1.Add(oldNewIdxDict1[idx0]);
-                        crossTri1.Add(oldNewIdxDict1[root]);
-            
-                        crossTri2.Add(oldNewIdxDict2[idx1]);
-                        crossTri2.Add(oldNewIdxDict2[idx0]);
-                        crossTri2.Add(oldNewIdxDict2[root]);
-                    }
-                }
-            }
-            
-            
-            obj.SetActive(false);
-            part1 = CreateMesh(ve1, tri1.ToArray(), crossTri1.ToArray(), obj);
-            part2 = CreateMesh(ve2, tri2.ToArray(), crossTri2.ToArray(), obj);
-            CopyComponents(obj, part1, part2);
-            
-            // part1 = CreateMeshFromOrigin(ve1, tri1.ToArray(), obj);
-            // part2 = CreateMeshFromOrigin(ve2, tri2.ToArray(), obj);
-            
-            part1.SetActive(true);
-            part2.SetActive(true);
-            part1.name = obj.name + "1";
-            part2.name = obj.name + "2";
-            return true;
+            return intersect;
         }
-
+        
         private void SliceTriTo3(Mesh mesh, Vector3[] abc, int[] abci, LineXPlaneResult[] rabc, List<MeshVertex> newMeshVertices, List<int> newTriangles)
         {
             Vector3 a = abc[0];
