@@ -123,7 +123,7 @@ namespace Slicing
             var bpXn = Vector3.Dot((b - point), normal);
             var apnXbpn = apXn * bpXn;
             // two points are on the plane
-            if (Mathf.Abs(apXn) < Mathf.Epsilon && Mathf.Abs(bpXn) < Mathf.Epsilon) //TODO float == 0?
+            if (Mathf.Abs(apXn) <= Mathf.Epsilon && Mathf.Abs(bpXn) <= Mathf.Epsilon) //TODO float == 0?
             {
                 return new LineXPlaneResult(LineXPlaneType.TwoOnPlane,
                     new Vector3[] {a, b},
@@ -131,13 +131,13 @@ namespace Slicing
             }
             
             // one point are on the plane
-            if (Mathf.Abs(apXn) < Mathf.Epsilon) 
+            if (Mathf.Abs(apXn) <= Mathf.Epsilon) 
             {
                 return new LineXPlaneResult(LineXPlaneType.V1OnPlane,
                     new Vector3[] {a},
                     new float[] {0});
             }
-            if (Mathf.Abs(bpXn) < Mathf.Epsilon) 
+            if (Mathf.Abs(bpXn) <= Mathf.Epsilon) 
             {
                 return new LineXPlaneResult(LineXPlaneType.V2OnPlane,
                     new Vector3[] {b},
