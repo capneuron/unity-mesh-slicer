@@ -114,6 +114,15 @@ namespace Slicing
             
             //seal the surface
             int root = crossSurfaceVerIdx.ElementAt(0);
+            var rootV1 = newMeshVertices[root].vertex;
+            var rootV2 = newMeshVertices[root].vertex;
+            
+            int rootIdx1 = ve1.Count;
+            ve1.Add(new MeshVertex(rootV1, Vector2.zero, plane.normal));
+            
+            int rootIdx2 = ve2.Count;
+            ve2.Add(new MeshVertex(rootV2, Vector2.zero, -plane.normal));
+            
             for (int submesh = 0; submesh < 2 && submesh < mesh.subMeshCount; submesh++)
             {
                 var newTriangles = newTrianglesList[submesh];
@@ -127,13 +136,17 @@ namespace Slicing
                         if (crossSurfaceVerIdx.Contains(idx0) && crossSurfaceVerIdx.Contains(idx1) && idx0 != root &&
                             idx1 != root)
                         {
-                            tri1[1].Add(oldNewIdxDict1[idx1]);
-                            tri1[1].Add(oldNewIdxDict1[idx0]);
-                            tri1[1].Add(oldNewIdxDict1[root]);
-            
-                            tri2[1].Add(oldNewIdxDict2[idx1]);
-                            tri2[1].Add(oldNewIdxDict2[idx0]);
-                            tri2[1].Add(oldNewIdxDict2[root]);
+                            tri1[1].Add(ve1.Count);
+                            ve1.Add(new MeshVertex(newMeshVertices[idx1].vertex, Vector2.zero, plane.normal));
+                            tri1[1].Add(ve1.Count);
+                            ve1.Add(new MeshVertex(newMeshVertices[idx0].vertex, Vector2.zero, plane.normal));
+                            tri1[1].Add(rootIdx1);
+                            
+                            tri2[1].Add(ve2.Count);
+                            ve2.Add(new MeshVertex(newMeshVertices[idx1].vertex, Vector2.zero, -plane.normal));
+                            tri2[1].Add(ve2.Count);
+                            ve2.Add(new MeshVertex(newMeshVertices[idx0].vertex, Vector2.zero, -plane.normal));
+                            tri2[1].Add(rootIdx2);
                         }
                     }
                 }
