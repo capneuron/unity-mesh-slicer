@@ -69,7 +69,7 @@ public class Test : MonoBehaviour
 
     void sliceObjectWithMouse(HashSet<string> sliceObjects, Vector3 downPos, Vector3 upPos)
     {
-        Slicer slicer = new Slicer();
+        Slicer slicer = new Slicer(25);
         foreach (string name in sliceObjects)
         {
             GameObject obj = GameObject.Find(name);

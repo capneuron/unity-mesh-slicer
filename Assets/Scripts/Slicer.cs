@@ -8,9 +8,10 @@ namespace Slicing
 {
     public class Slicer
     {
-        public Slicer()
+        private float force;
+        public Slicer(float force = 0f)
         {
-            
+            this.force = force;
         }
         
         
@@ -167,6 +168,19 @@ namespace Slicing
             part2.SetActive(true);
             part1.name = obj.name + "1";
             part2.name = obj.name + "2";
+            if (force > 0.0001f)
+            {
+                if(part1.TryGetComponent(out Rigidbody rgbd1))
+                {
+                    rgbd1.AddForce(-plane.normal * force * rgbd1.mass);
+                }
+                
+                if(part2.TryGetComponent(out Rigidbody rgbd2))
+                {
+                    rgbd2.AddForce(plane.normal * force* rgbd2.mass);
+                }
+            }
+            
             return true;
         }
 
