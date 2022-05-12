@@ -89,10 +89,11 @@ public class Test : MonoBehaviour
             if (rotate)
             {
                 camera.transform.RotateAround(transform.position, Vector3.up, speed * Input.GetAxis("Mouse X"));
-                camera.transform.RotateAround(transform.position, Vector3.right, -speed * Input.GetAxis("Mouse Y"));
-                Vector3 curRotation = camera.transform.rotation.eulerAngles;
-                camera.transform.rotation = Quaternion.Euler(curRotation.x, curRotation.y, 0);
-
+                if (camera.transform.position.y > 1f || Input.GetAxis("Mouse Y") <0)
+                {
+                    camera.transform.RotateAround(transform.position, camera.transform.right, -speed * Input.GetAxis("Mouse Y"));
+                }
+                
                 // if (camera.transform.position.y <= 0)
                 // {
                 //     Vector3 curPos = camera.transform.position;
