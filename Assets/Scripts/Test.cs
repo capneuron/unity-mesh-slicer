@@ -9,6 +9,7 @@ using Vector3 = UnityEngine.Vector3;
 
 public class Test : MonoBehaviour
 {
+    [SerializeField] private Camera camera;
     public static string mainObj = "testObj";
 
     public float sliceForce = 25;
@@ -65,6 +66,30 @@ public class Test : MonoBehaviour
         if(Input.GetKeyUp(KeyCode.Space))
         {
             Blow(windForce);
+        }
+        
+        if (Input.GetKeyDown(KeyCode.RightArrow))
+        {
+            // camera.transform.Translate(new Vector3(10, 0, 0));
+            camera.transform.Rotate(new Vector3(0, 1, 0), 10, Space.World);
+        }
+        
+        if (Input.GetKeyDown(KeyCode.LeftArrow))
+        {
+            // camera.transform.Translate(new Vector3(-10, 0, 0));
+            camera.transform.Rotate(new Vector3(0, 1, 0), -10, Space.World);
+        }
+        
+        if (Input.GetKeyDown(KeyCode.UpArrow))
+        {
+            camera.transform.Translate(new Vector3(0, 2, 5), Space.World);
+            camera.transform.Rotate(new Vector3(1, 0, 0), 10, Space.World);
+        }
+        
+        if (Input.GetKeyDown(KeyCode.DownArrow))
+        {
+            camera.transform.Translate(new Vector3(0, -2, -5), Space.World);
+            camera.transform.Rotate(new Vector3(1, 0, 0), -10, Space.World);
         }
     }
 
