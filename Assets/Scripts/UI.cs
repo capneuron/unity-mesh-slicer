@@ -18,7 +18,7 @@ public class UI : MonoBehaviour
     private TextMeshProUGUI pieceText;
 
     public Test testComponent;
-    private void Start()
+    private void Awake()
     {
         cutText = cutTimeGo.GetComponent<TextMeshProUGUI>();
         pieceText = piecesCountGo.GetComponent<TextMeshProUGUI>();
@@ -61,7 +61,11 @@ public class UI : MonoBehaviour
         cutTimes = count;
         cutText.SetText("Cut "+cutTimes+" times");
     }
-    
+
+    public int GetCutTimes()
+    {
+        return cutTimes;
+    }
     public void SetPiecesCount(int pieces)
     {
         piecesCount = pieces;

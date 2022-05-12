@@ -34,7 +34,7 @@ public class Test : MonoBehaviour
         Vector3.forward, Vector3.forward, 
         Vector3.right, Vector3.right,
         Vector3.back, Vector3.back };
-    
+
     // Start is called before the first frame update
     void Start()
     {
@@ -69,7 +69,8 @@ public class Test : MonoBehaviour
             var hits = Physics.RaycastAll(ray, 100);
             foreach (var hit in hits)
             {
-                sliceObjects.Add(hit.transform.gameObject);
+                if (Sliceable.IsSliceable(hit.transform.gameObject))
+                    sliceObjects.Add(hit.transform.gameObject);
             }
         }
 
@@ -78,6 +79,11 @@ public class Test : MonoBehaviour
         {
             upMousePos = Input.mousePosition;
             sliceObjectWithMouse(sliceObjects, downMousePos, upMousePos);
+            if (sliceObjects.Count > 0)
+            {
+                uiComponent.SetCutTimes(uiComponent.GetCutTimes()+1);
+            }
+            
             sliceObjects.Clear();
         }
 
@@ -137,8 +143,11 @@ public class Test : MonoBehaviour
             goList.Add(obj);
             planeList.Add(p);
         }
-
-        StartCoroutine(SliceMultiple(slicer, goList, planeList));
+        
+        StartCoroutine(SliceMultiple(slicer, goList, planeList, (o, o1) =>
+        {
+            uiComponent.SetPiecesCount(getObjNum());
+        }));
     }
 
     IEnumerator SliceMultiple(Slicer slicer, List<GameObject> objs, List<Plane> planes, Action<GameObject, GameObject> cb=null)
@@ -169,5 +178,20 @@ public class Test : MonoBehaviour
                 windDir++;
             }
         }
+    }
+
+    public int getObjNum()
+    {
+        int res = 0;
+        var all = FindObjectsOfType(typeof(GameObject)) as GameObject[];
+        foreach (var go in all)
+        {
+            if (go.activeSelf && go.TryGetComponent(out Rigidbody rdbd) && Sliceable.IsSliceable(go))
+            {
+                res++;
+            }
+        }
+
+        return res;
     }
 }
