@@ -52,4 +52,5 @@ TODO
 ![image](https://github.com/capneuron/unity-mesh-slicer/blob/master/Image/cakeSlicing.gif?raw=true)
 
 ## Future work / Known issues
-- Need to figure out how to decide the uvs(textur
+- Need to figure out how to decide the uvs(texture coordinates) for the vertices on the intersection surface.
+- The number of vertices surges when performing the slicing repeatedly, which cause some performance issue.
