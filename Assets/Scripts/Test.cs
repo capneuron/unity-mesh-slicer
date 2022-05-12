@@ -62,8 +62,8 @@ public class Test : MonoBehaviour
         if (Input.GetMouseButton(0))
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-
-            if (Physics.Raycast(ray, out RaycastHit hit, 100))
+            var hits = Physics.RaycastAll(ray, 100);
+            foreach (var hit in hits)
             {
                 sliceObjects.Add(hit.transform.gameObject);
             }
