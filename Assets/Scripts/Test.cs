@@ -10,20 +10,33 @@ using Vector3 = UnityEngine.Vector3;
 public class Test : MonoBehaviour
 {
     [SerializeField] private Camera camera;
+    [SerializeField] private Transform target;
+    [SerializeField] private float distanceToTarget = 7000;
+    private Vector3 previousPosition;
+
     public static string mainObj = "testObj";
 
     public float sliceForce = 25;
-    public float windForce = 125;
+    public float windForce = 10;
+    public int windDir = 0;
+
+    public float speed = 3f;
+ 
+    private bool rotate = false;
+ 
+    public float maxView = 90;
+    public float minView = 10;
+
+    public Vector3[] windDirs = { 
+        Vector3.left, Vector3.left, 
+        Vector3.forward, Vector3.forward, 
+        Vector3.right, Vector3.right,
+        Vector3.back, Vector3.back };
+    
     // Start is called before the first frame update
     void Start()
     {
-         // Slicer slicer = new Slicer();
-         // GameObject obj = GameObject.Find("testObj");
-         //
-         // //TODO:
-         // var p = new Plane(new Vector3(0f, 3f, 0), new Vector3(0.5f, 4f, 0), new Vector3(0f, 3f, 1));
-         // GameObject p1, p2;
-         // if (slicer.Slice(obj, p, out p1, out p2));
+        previousPosition = camera.transform.position;
     }
 
     // Update is called once per frame
@@ -33,12 +46,16 @@ public class Test : MonoBehaviour
 
     void Update()
     {
+        // Zoom in/out
+        float offsetView = -Input.GetAxis("Mouse ScrollWheel") * speed;
+        float tmpView = offsetView + Camera.main.fieldOfView;
+        tmpView = Mathf.Clamp(tmpView, minView, maxView);
+        Camera.main.fieldOfView = tmpView;
+
         // Left Mouse Button Clicked
         if (Input.GetMouseButtonDown(0))
         {
             downMousePos = Input.mousePosition;
-            // Debug.Log("click (x, y, z): ("
-            //           + downMousePos.x + ", " + downMousePos.y + ", " + downMousePos.z + ")");
         }
 
         // Left Mouse Button Dragging
@@ -56,11 +73,38 @@ public class Test : MonoBehaviour
         if (Input.GetMouseButtonUp(0))
         {
             upMousePos = Input.mousePosition;
-            // Debug.Log("UP (x, y, z): ("
-            //           + upMousePos.x + ", " + upMousePos.y + ", " + upMousePos.z + ")");
-
             sliceObjectWithMouse(sliceObjects, downMousePos, upMousePos);
             sliceObjects.Clear();
+        }
+
+        // Right Mouse Button Down
+        if (Input.GetMouseButtonDown(1))
+        {
+            rotate = true;
+        }
+        
+        // Right Mouse Button Drag
+        if (Input.GetMouseButton(1))
+        {
+            if (rotate)
+            {
+                camera.transform.RotateAround(transform.position, Vector3.up, speed * Input.GetAxis("Mouse X"));
+                camera.transform.RotateAround(transform.position, Vector3.right, -speed * Input.GetAxis("Mouse Y"));
+                Vector3 curRotation = camera.transform.rotation.eulerAngles;
+                camera.transform.rotation = Quaternion.Euler(curRotation.x, curRotation.y, 0);
+
+                // if (camera.transform.position.y <= 0)
+                // {
+                //     Vector3 curPos = camera.transform.position;
+                //     camera.transform.position = new Vector3(curPos.x, 0, curPos.z);
+                // }
+            }
+        }
+
+        // Right Mouse Button Up
+        if (Input.GetMouseButtonUp(1))
+        {
+            rotate = false;
         }
         
         if(Input.GetKeyUp(KeyCode.Space))
@@ -68,29 +112,6 @@ public class Test : MonoBehaviour
             Blow(windForce);
         }
         
-        if (Input.GetKeyDown(KeyCode.RightArrow))
-        {
-            // camera.transform.Translate(new Vector3(10, 0, 0));
-            camera.transform.Rotate(new Vector3(0, 1, 0), 10, Space.World);
-        }
-        
-        if (Input.GetKeyDown(KeyCode.LeftArrow))
-        {
-            // camera.transform.Translate(new Vector3(-10, 0, 0));
-            camera.transform.Rotate(new Vector3(0, 1, 0), -10, Space.World);
-        }
-        
-        if (Input.GetKeyDown(KeyCode.UpArrow))
-        {
-            camera.transform.Translate(new Vector3(0, 2, 5), Space.World);
-            camera.transform.Rotate(new Vector3(1, 0, 0), 10, Space.World);
-        }
-        
-        if (Input.GetKeyDown(KeyCode.DownArrow))
-        {
-            camera.transform.Translate(new Vector3(0, -2, -5), Space.World);
-            camera.transform.Rotate(new Vector3(1, 0, 0), -10, Space.World);
-        }
     }
 
     void sliceObjectWithMouse(HashSet<GameObject> sliceObjects, Vector3 downPos, Vector3 upPos)
@@ -126,17 +147,24 @@ public class Test : MonoBehaviour
         }
     }
 
-    private void Blow(float force = 125)
+    private void Blow(float force = 30)
     {
         var all = Resources.FindObjectsOfTypeAll(typeof(GameObject)) as GameObject[];
         foreach (var go in all)
         {
             if (go.activeSelf && go.TryGetComponent(out Rigidbody rdbd) && Sliceable.IsSliceable(go))
             {
-                rdbd.AddForce(Vector3.right * force);
+                rdbd.AddForce(windDirs[windDir % windDirs.Length] * force);
+                rdbd.AddForce(windDirs[(windDir + 1) % windDirs.Length] * force);
+                if (windDir % windDirs.Length == 0)
+                {
+                    windDir = 0;
+                }
+
+                windDir++;
             }
         }
 
-       
+        
     }
 }
