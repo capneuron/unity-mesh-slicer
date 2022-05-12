@@ -8,10 +8,12 @@ We implement the mesh slicer that can "slice" from any angle.
 ## Instructions
 In the example program we provide, you can
 
-- TODO: camera moving instructions.
 - **Left mouse button**: Slice the objects.
     - Press down, move the cursor across the object, then release the button.
-- **Space**: Blow wind to the objects.
+- **Right mouse button**: Rotate main camera around the object.
+- **Mouse Scroll Wheel**: Zoom in/out.
+- **Space Key/Blow Wind Button**: Blow wind to the objects.
+- **Reset Cake/Watermelon**: A whole new cake/watermelon will rise from the ground.
 
 ## Slicing Implementation
 
@@ -57,3 +59,7 @@ When a cube is cut four times, it can generate 15 pieces at most without moving 
 ## Future work / Known issues
 - Need to figure out how to decide the uvs(texture coordinates) for the vertices on the intersection surface.
 - The number of vertices surges when performing the slicing repeatedly, which cause some performance issue.
+
+## Team Members
+- Yuan Fang (81584834) --Brown University
+- Haidong Qi (81584826) --Brown University
