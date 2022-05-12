@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class UI : MonoBehaviour
@@ -71,6 +72,9 @@ public class UI : MonoBehaviour
         piecesCount = pieces;
         pieceText.SetText("Into "+piecesCount+" Piece");
     }
-    
-    
+
+    public void Quit()
+    {
+        Application.Quit();
+    }
 }
