@@ -8,19 +8,14 @@ using Vector3 = UnityEngine.Vector3;
 
 public class Test : MonoBehaviour
 {
+    [SerializeField] private Camera camera;
     public static string mainObj = "testObj";
 
     public float force = 25;
     // Start is called before the first frame update
     void Start()
     {
-         // Slicer slicer = new Slicer();
-         // GameObject obj = GameObject.Find("testObj");
-         //
-         // //TODO:
-         // var p = new Plane(new Vector3(0f, 3f, 0), new Vector3(0.5f, 4f, 0), new Vector3(0f, 3f, 1));
-         // GameObject p1, p2;
-         // if (slicer.Slice(obj, p, out p1, out p2));
+
     }
 
     // Update is called once per frame
@@ -34,8 +29,6 @@ public class Test : MonoBehaviour
         if (Input.GetMouseButtonDown(0))
         {
             downMousePos = Input.mousePosition;
-            // Debug.Log("click (x, y, z): ("
-            //           + downMousePos.x + ", " + downMousePos.y + ", " + downMousePos.z + ")");
         }
 
         // Left Mouse Button Dragging
@@ -53,11 +46,32 @@ public class Test : MonoBehaviour
         if (Input.GetMouseButtonUp(0))
         {
             upMousePos = Input.mousePosition;
-            // Debug.Log("UP (x, y, z): ("
-            //           + upMousePos.x + ", " + upMousePos.y + ", " + upMousePos.z + ")");
-
             sliceObjectWithMouse(sliceObjects, downMousePos, upMousePos);
             sliceObjects.Clear();
+        }
+        
+        if (Input.GetKeyDown(KeyCode.RightArrow))
+        {
+            // camera.transform.Translate(new Vector3(10, 0, 0));
+            camera.transform.Rotate(new Vector3(0, 1, 0), -10, Space.World);
+        }
+        
+        if (Input.GetKeyDown(KeyCode.LeftArrow))
+        {
+            // camera.transform.Translate(new Vector3(-10, 0, 0));
+            camera.transform.Rotate(new Vector3(0, 1, 0), 10, Space.World);
+        }
+        
+        if (Input.GetKeyDown(KeyCode.UpArrow))
+        {
+            camera.transform.Translate(new Vector3(0, 10, 0), Space.World);
+            camera.transform.Rotate(new Vector3(1, 0, 0), 10, Space.World);
+        }
+        
+        if (Input.GetKeyDown(KeyCode.DownArrow))
+        {
+            camera.transform.Translate(new Vector3(0, -10, 0), Space.World);
+            camera.transform.Rotate(new Vector3(1, 0, 0), -10, Space.World);
         }
     }
 
@@ -69,8 +83,7 @@ public class Test : MonoBehaviour
         foreach (GameObject obj in sliceObjects)
         {
             if(!Sliceable.IsSliceable(obj)) continue;
-            // Debug.Log("cut obj: " + name);
-
+            
             var p = new Plane(
                 Camera.main.ScreenToWorldPoint(new Vector3(downPos.x, downPos.y, Camera.main.nearClipPlane)),
                 Camera.main.ScreenToWorldPoint(new Vector3(upPos.x, upPos.y, Camera.main.nearClipPlane)),
