@@ -150,7 +150,7 @@ public class Test : MonoBehaviour
 
     private void Blow(float force = 30)
     {
-        var all = Resources.FindObjectsOfTypeAll(typeof(GameObject)) as GameObject[];
+        var all = FindObjectsOfType(typeof(GameObject)) as GameObject[];
         foreach (var go in all)
         {
             if (go.activeSelf && go.TryGetComponent(out Rigidbody rdbd) && Sliceable.IsSliceable(go))
@@ -165,7 +165,5 @@ public class Test : MonoBehaviour
                 windDir++;
             }
         }
-
-        
     }
 }
