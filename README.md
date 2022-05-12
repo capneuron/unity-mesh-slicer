@@ -52,6 +52,7 @@ Use Physics.RaycastAll to find all objects that are swept by the mouse and apply
 
 ## Fun Fact
 *“How many cubes we get from 4 cuts?”*
+
 With 4 cuts, a cube can be cut into 15 pieces at most without moving the object. Can you make it more than 15? Give it a try! 😊
 
 ![image](https://github.com/capneuron/unity-mesh-slicer/blob/master/Image/cakeSlicing.gif?raw=true)
