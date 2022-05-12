@@ -119,12 +119,11 @@ namespace Slicing
             var rootV2 = newMeshVertices[root].vertex;
             
             int rootIdx1 = ve1.Count;
-            ve1.Add(new MeshVertex(rootV1, Vector2.zero, plane.normal));
+            ve1.Add(new MeshVertex(rootV1, Vector2.zero, -plane.normal));
             
             int rootIdx2 = ve2.Count;
-            ve2.Add(new MeshVertex(rootV2, Vector2.zero, -plane.normal));
+            ve2.Add(new MeshVertex(rootV2, Vector2.zero, plane.normal));
 
-            int c1=0, c2=0;
             for (int submesh = 0; submesh < 2 && submesh < mesh.subMeshCount; submesh++)
             {
                 var newTriangles = newTrianglesList[submesh];
@@ -134,29 +133,27 @@ namespace Slicing
                     {
                         var idx0 = newTriangles[i+j];
                         var idx1 = newTriangles[i+(j+1)%3];
-                        c1++;
                         if (crossSurfaceVerIdx.Contains(idx0) && crossSurfaceVerIdx.Contains(idx1) && idx0 != root &&
                             idx1 != root)
                         {
-                            c2++;
+                            var v1 = newMeshVertices[idx1].vertex;
+                            var v0 = newMeshVertices[idx0].vertex;
                             tri1[1].Add(ve1.Count);
-                            ve1.Add(new MeshVertex(newMeshVertices[idx1].vertex, Vector2.zero, plane.normal));
+                            ve1.Add(new MeshVertex(v1, Vector2.zero, v1-plane.normal));
                             tri1[1].Add(ve1.Count);
-                            ve1.Add(new MeshVertex(newMeshVertices[idx0].vertex, Vector2.zero, plane.normal));
+                            ve1.Add(new MeshVertex(v0, Vector2.zero, v0-plane.normal));
                             tri1[1].Add(rootIdx1);
                             
                             tri2[1].Add(ve2.Count);
-                            ve2.Add(new MeshVertex(newMeshVertices[idx1].vertex, Vector2.zero, -plane.normal));
+                            ve2.Add(new MeshVertex(v1, Vector2.zero, v1+plane.normal));
                             tri2[1].Add(ve2.Count);
-                            ve2.Add(new MeshVertex(newMeshVertices[idx0].vertex, Vector2.zero, -plane.normal));
+                            ve2.Add(new MeshVertex(v0, Vector2.zero, v0+plane.normal));
                             tri2[1].Add(rootIdx2);
                         }
                     }
                 }
             }
 
-           
-            Debug.Log(c1+","+c2);
             
             obj.SetActive(false);
             part1 = CreateMesh(ve1, tri1[0].ToArray(), tri1[1].ToArray(), obj);

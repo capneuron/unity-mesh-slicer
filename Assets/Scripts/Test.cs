@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Slicing;
+using Unity.VisualScripting;
 using UnityEngine;
 using Plane = Slicing.Plane;
 using Vector3 = UnityEngine.Vector3;
@@ -10,7 +11,8 @@ public class Test : MonoBehaviour
 {
     public static string mainObj = "testObj";
 
-    public float force = 25;
+    public float sliceForce = 25;
+    public float windForce = 125;
     // Start is called before the first frame update
     void Start()
     {
@@ -59,11 +61,16 @@ public class Test : MonoBehaviour
             sliceObjectWithMouse(sliceObjects, downMousePos, upMousePos);
             sliceObjects.Clear();
         }
+        
+        if(Input.GetKeyUp(KeyCode.Space))
+        {
+            Blow(windForce);
+        }
     }
 
     void sliceObjectWithMouse(HashSet<GameObject> sliceObjects, Vector3 downPos, Vector3 upPos)
     {
-        Slicer slicer = new Slicer(force);
+        Slicer slicer = new Slicer(sliceForce);
         List<GameObject> goList = new List<GameObject>();
         List<Plane> planeList = new List<Plane>();
         foreach (GameObject obj in sliceObjects)
@@ -92,5 +99,19 @@ public class Test : MonoBehaviour
 
             yield return new WaitForSeconds(.10f);
         }
+    }
+
+    private void Blow(float force = 125)
+    {
+        var all = Resources.FindObjectsOfTypeAll(typeof(GameObject)) as GameObject[];
+        foreach (var go in all)
+        {
+            if (go.activeSelf && go.TryGetComponent(out Rigidbody rdbd) && Sliceable.IsSliceable(go))
+            {
+                rdbd.AddForce(Vector3.right * force);
+            }
+        }
+
+       
     }
 }
