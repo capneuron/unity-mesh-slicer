@@ -1,7 +1,7 @@
 # unity-mesh-slicer
 This project is inspired by the "Blade Mode" in a video game: Metal Gear Rising, where the player could slice the objects freely.
 
-We implement the mesh slicer that can "slice" from any angle.
+We implement the mesh slicer that can "slice" from any angle. We provide executable files for both Windows and Mac in **/Build/** folder.
 
 ![image](https://github.com/capneuron/unity-mesh-slicer/blob/master/Image/5.png?raw=true)
 
@@ -15,7 +15,7 @@ In the example program we provide, you can
 - **Space Key/Blow Wind Button**: Blow wind to the objects.
 - **Reset Cake/Watermelon**: A whole new cake/watermelon will rise from the ground.
 
-## Slicing Implementation
+## Implementation of Slicing
 
 ### Generate new vertices and triangles
 To perform the slicing, we will use a plane, defined by a point and a normal vector, to cut the mesh. First, we want to find all the triangles that intersect with the plane. To do this, we test every line in every triangle to find the triangles we need and just do some math to find the intersection points.
@@ -46,7 +46,7 @@ For the new vertices generated we put them in both parts because these vertices 
 
 ![image](https://github.com/capneuron/unity-mesh-slicer/blob/master/Image/example.gif?raw=true)
 
-## Other Logic Implementation
+## Implementation of Other Logic
 Use Physics.RaycastAll to find all objects that are swept by the mouse and apply slicing.
 
 
