@@ -45,9 +45,12 @@ For the new vertices generated we put them in both parts because these vertices 
 ![image](https://github.com/capneuron/unity-mesh-slicer/blob/master/Image/example.gif?raw=true)
 
 ## Other Logic Implementation
-TODO
+Use Physics.RaycastAll to find all objects that are swept by the mouse and apply slicing.
+
 
 ## Fun Fact
+
+When a cube is cut four times, it can generate 15 pieces at most without moving the object. Can you make it? Let's have a try! 😊
 
 ![image](https://github.com/capneuron/unity-mesh-slicer/blob/master/Image/cakeSlicing.gif?raw=true)
 
