@@ -9,6 +9,8 @@ using Vector3 = UnityEngine.Vector3;
 
 public class Test : MonoBehaviour
 {
+    private UI uiComponent;
+    
     [SerializeField] private Camera camera;
     [SerializeField] private Transform target;
     [SerializeField] private float distanceToTarget = 7000;
@@ -26,7 +28,7 @@ public class Test : MonoBehaviour
  
     public float maxView = 90;
     public float minView = 10;
-
+        
     public Vector3[] windDirs = { 
         Vector3.left, Vector3.left, 
         Vector3.forward, Vector3.forward, 
@@ -36,6 +38,8 @@ public class Test : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        uiComponent = Camera.main.transform.Find("Canvas").GetComponent<UI>();
+        uiComponent.ResetWatermelon();
         previousPosition = camera.transform.position;
     }
 
@@ -148,7 +152,7 @@ public class Test : MonoBehaviour
         }
     }
 
-    private void Blow(float force = 30)
+    public void Blow(float force = 30)
     {
         var all = FindObjectsOfType(typeof(GameObject)) as GameObject[];
         foreach (var go in all)
