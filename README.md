@@ -47,5 +47,9 @@ For the new vertices generated we put them in both parts because these vertices 
 ## Other Logic Implementation
 TODO
 
+## Fun Fact
+
+![image](https://github.com/capneuron/unity-mesh-slicer/blob/master/Image/cakeSlicing.gif?raw=true)
+
 ## Future work / Known issues
 - Need to figure out how to decide the uvs(textur
