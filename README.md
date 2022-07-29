@@ -60,7 +60,3 @@ With 4 cuts, a cube can be cut into 15 pieces at most without moving the object.
 ## Future work / Known issues
 - Need to figure out how to decide the uvs(texture coordinates) for the vertices on the intersection surface.
 - The number of vertices surges when performing the slicing repeatedly, which cause some performance issue.
-
-## Team Members
-- Yuan Fang (81584834) --Brown University
-- Haidong Qi (81584826) --Brown University
